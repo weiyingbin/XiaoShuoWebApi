@@ -1,7 +1,8 @@
 from django.http import HttpResponse
 from bs4 import BeautifulSoup
 import requests
-import json
+import re
+from . import result
 
 searchUrl = 'https://sou.xanbhx.com/search?siteid=qula&q='
 
@@ -19,7 +20,10 @@ req_header = {
 
 
 def searchBoook(request):
-    req_url = searchUrl + '遮天'
+    name = request.GET.get("name")
+    if name == '':
+        return result.error(message='请传入name参数', data=None)
+    req_url = searchUrl + name
     res = requests.get(req_url, params=req_header)
     soups = BeautifulSoup(res.text, "html.parser")
     # 查找第一个ul节点
@@ -34,24 +38,40 @@ def searchBoook(request):
         # 定义返回书的结构
         book = {
             'type': '',
-            'name': {'name': '', 'url': ''},
-            'chapter': {'chapter': '', 'url': ''},
+            'name': '',
+            'code': '',
+            'chapter': '',
+            'chapterCode': '',
             'author': '',
             'click': '',
             'time': '',
             'status': ''
         }
         spans = li.find_all('span')
-        book['type'] = spans[0].string
-        name = book['name']
-        name['name'] = spans[1].a.string
-        name['url'] = spans[1].a.get('href')
-        chapter = book['chapter']
-        chapter['chapter'] = spans[2].a.string
-        chapter['url'] = spans[2].a.get('href')
+        type_s = spans[0].string
+        # 删除两边的[]
+        book['type'] = type_s.strip().strip('[]')
+        name_s = spans[1].a.string
+        # 去除字符串中的\n\r\t
+        name_s_re = re.sub('[\r\n\t]', '', name_s)
+        # 去除前面的空格
+        book['name'] = name_s_re.lstrip()
+        url = spans[1].a.get('href')
+        # 分割字符串
+        url_s = url.split("/")
+        # print(url_s)
+        # 取分割后的第5个即为书号
+        book['code'] = url_s[4]
+        book['chapter'] = spans[2].a.string
+        spans[2].a.get('href')
+        chapter_url = spans[2].a.get('href')
+        chapter_url_s = chapter_url.split('/')
+        # print(chapter_url_s)
+        # 去除章节号后面的.html
+        book['chapterCode'] = chapter_url_s[5].rstrip().rstrip('.html')
         book['author'] = spans[3].string
         book['click'] = spans[4].string
         book['time'] = spans[5].string
         book['status'] = spans[6].string
         books.append(book)
-    return HttpResponse(json.dumps(books))
+    return result.success(books)
