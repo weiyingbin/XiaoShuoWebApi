@@ -1,8 +1,7 @@
-from django.http import HttpResponse
 from bs4 import BeautifulSoup
 import requests
 import re
-from . import result
+from XiaoshuoWebAPI.modal import result
 
 searchUrl = 'https://sou.xanbhx.com/search?siteid=qula&q='
 
