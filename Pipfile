@@ -9,7 +9,7 @@ verify_ssl = true
 beautifulsoup4 = "==4.7.1"
 certifi = "==2018.11.29"
 chardet = "==3.0.4"
-django = "==2.1.7"
+django = "==2.2.13"
 idna = "==2.8"
 pipenv = "==2018.11.26"
 pytz = "==2018.9"
